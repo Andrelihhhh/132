@@ -1,22 +1,28 @@
 import requests
 import pandas as pd
+import time
 
-def fetch_quote():
+def fetch_quotes(n=5):
     url = "https://zenquotes.io/api/random"
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        df = pd.DataFrame([data[0]])
-        df = df[['q', 'a']].rename(columns={'q': 'Цитата', 'a': 'Автор'})
-        return df
-    except Exception as e:
-        print(f"Ошибка: {e}")
-        return None
+    quotes = []
+
+    for i in range(n):
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()[0]
+            quotes.append({"quote": data["q"], "author": data["a"]})
+        except Exception as e:
+            print(f"{i+1}. Ошибка: {e}")
+        time.sleep(1)
+
+    df = pd.DataFrame(quotes)
+    return df
+
 
 if __name__ == "__main__":
-    df = fetch_quote()
-    if df is not None:
-        print(df.to_string(index=False, header=False))
-    else:
-        print("Не удалось загрузить")
+    df = fetch_quotes(5)
+    print(df.head())
+
+    output_file = "quotes.csv"
+    df.to_csv(output_file, index=False)
